@@ -53,7 +53,7 @@
             border-radius: 50px;
             cursor: pointer;
             border: none;
-            pointer-events: none; /* Csak virtuális kurzoron keresztül működik */
+            pointer-events: none;
         }
 
         #igen {
@@ -78,8 +78,13 @@
             pointer-events: none;
             z-index: 9999;
             transform: translate(-50%, -50%);
-            transition: background 0.2s;
             box-shadow: 0 0 10px rgba(255,105,180,0.5);
+            transition: background 0.2s;
+        }
+
+        #virtualis-kurzor.hover {
+            background: rgba(194, 24, 91, 0.9);
+            transform: translate(-50%, -50%) scale(1.3);
         }
 
         /* ===== VENTILLÁTOR ===== */
@@ -88,14 +93,22 @@
             right: 30px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 70px;
+            font-size: 80px;
             z-index: 500;
-            filter: drop-shadow(0 0 10px rgba(0,0,0,0.2));
             display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #ventilator span {
+            font-size: 13px;
+            color: #c2185b;
+            font-weight: bold;
         }
 
         .forog {
-            animation: forog 0.2s linear infinite;
+            animation: forog 0.15s linear infinite;
             display: inline-block;
         }
 
@@ -104,11 +117,11 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ===== TOUCHPAD ===== */
+        /* ===== TOUCHPAD - BAL OLDAL ===== */
         #touchpad-container {
             position: fixed;
             bottom: 20px;
-            right: 20px;
+            left: 20px;
             display: none;
             flex-direction: column;
             align-items: center;
@@ -127,15 +140,20 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: rgba(194, 24, 91, 0.4);
+            color: rgba(194, 24, 91, 0.5);
             font-size: 13px;
         }
 
-        /* ===== CLICK GOMB ===== */
+        #touchpad-label {
+            font-size: 12px;
+            color: rgba(194, 24, 91, 0.6);
+        }
+
+        /* ===== CLICK GOMB - JOBB OLDAL ===== */
         #click-btn-container {
             position: fixed;
             bottom: 20px;
-            left: 20px;
+            right: 20px;
             display: none;
             z-index: 1000;
         }
@@ -178,8 +196,6 @@
         /* ===== KONFETTI ===== */
         .konfetti {
             position: fixed;
-            width: 10px;
-            height: 10px;
             border-radius: 50%;
             animation: esik 3s ease-in forwards;
             z-index: 9998;
@@ -188,12 +204,6 @@
         @keyframes esik {
             0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
             100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-
-        /* ===== HOVER EFFEKT JELZÉS ===== */
-        #virtualis-kurzor.hover {
-            background: rgba(194, 24, 91, 0.9);
-            transform: translate(-50%, -50%) scale(1.3);
         }
     </style>
 </head>
@@ -218,17 +228,19 @@
 <!-- Virtuális kurzor -->
 <div id="virtualis-kurzor"></div>
 
-<!-- Ventillátor -->
+<!-- Ventillátor - csak utolsó kérdésnél -->
 <div id="ventilator">
     <span class="forog">🌀</span>
+    <span>SZÉL</span>
 </div>
 
-<!-- Touchpad (jobb oldal) -->
+<!-- Touchpad - BAL OLDAL -->
 <div id="touchpad-container">
     <div id="touchpad">mozgasd</div>
+    <div id="touchpad-label">⬆️ mozgatás</div>
 </div>
 
-<!-- Click gomb (bal oldal) -->
+<!-- Click gomb - JOBB OLDAL -->
 <div id="click-btn-container">
     <div id="click-btn">CLICK</div>
 </div>
@@ -254,11 +266,14 @@
     let touchAktiv = false;
     let touchStartX = 0;
     let touchStartY = 0;
-    const erzekenyeseg = 1.8; // Mozgás gyorsasága
+    const erzekenyeseg = 2.0;
 
-    // ===== VENTILLÁTOR VÁLTOZÓK =====
+    // ===== VENTILLÁTOR =====
+    // Olyan erős hogy a NEM-re se lehessen húzni
     let ventAktiv = false;
-    const ventEro = 3.5; // Mennyire fújja el
+    const ventEro = 12;        // Nagyon erős taszítás a NEM-től
+    const ventVonzas = 4;      // Vonzás az IGEN felé
+    const nemTiltosSugár = 180; // Ekkora körzetben taszít a NEM-től
 
     // ===== ELEMEK =====
     const igenGomb = document.getElementById('igen');
@@ -275,26 +290,33 @@
     if (isTelefon) {
         touchpadContainer.style.display = 'flex';
         clickBtnContainer.style.display = 'flex';
+        virtualisKurzor.style.display = 'block';
+    } else {
+        // Asztali gépen elrejtjük a virtuális kurzort
+        virtualisKurzor.style.display = 'none';
     }
 
-    // ===== KURZOR FRISSÍTÉS =====
-    function kursorFrissit() {
+    // ===== KURZOR ANIMÁCIÓ LOOP =====
+    function kursorLoop() {
         // Képernyőn belül tartás
         kursorX = Math.max(10, Math.min(window.innerWidth - 10, kursorX));
         kursorY = Math.max(10, Math.min(window.innerHeight - 10, kursorY));
 
+        // Kurzor pozíció frissítés
         virtualisKurzor.style.left = kursorX + 'px';
         virtualisKurzor.style.top = kursorY + 'px';
 
-        // Hover ellenőrzés
         const igenRect = igenGomb.getBoundingClientRect();
         const nemRect = nemGomb.getBoundingClientRect();
 
-        const igenHover = kursorX >= igenRect.left && kursorX <= igenRect.right &&
-                          kursorY >= igenRect.top && kursorY <= igenRect.bottom;
+        // Hover ellenőrzés
+        const igenHover =
+            kursorX >= igenRect.left && kursorX <= igenRect.right &&
+            kursorY >= igenRect.top && kursorY <= igenRect.bottom;
 
-        const nemHover = kursorX >= nemRect.left && kursorX <= nemRect.right &&
-                         kursorY >= nemRect.top && kursorY <= nemRect.bottom;
+        const nemHover =
+            kursorX >= nemRect.left && kursorX <= nemRect.right &&
+            kursorY >= nemRect.top && kursorY <= nemRect.bottom;
 
         if (igenHover || nemHover) {
             virtualisKurzor.classList.add('hover');
@@ -302,37 +324,49 @@
             virtualisKurzor.classList.remove('hover');
         }
 
-        // Ventillátor - utolsó kérdésnél fújja a kurzort az IGEN felé
+        // ===== VENTILLÁTOR FIZIKA =====
         if (ventAktiv) {
+            const nemKozepX = nemRect.left + nemRect.width / 2;
+            const nemKozepY = nemRect.top + nemRect.height / 2;
             const igenKozepX = igenRect.left + igenRect.width / 2;
             const igenKozepY = igenRect.top + igenRect.height / 2;
 
-            // Irány az IGEN gomb felé
-            const dx = igenKozepX - kursorX;
-            const dy = igenKozepY - kursorY;
-            const tavolsag = Math.hypot(dx, dy);
+            // Távolság a NEM-től
+            const dxNem = kursorX - nemKozepX;
+            const dyNem = kursorY - nemKozepY;
+            const tavolsagNem = Math.hypot(dxNem, dyNem);
 
-            if (tavolsag > 5) {
-                kursorX += (dx / tavolsag) * ventEro;
-                kursorY += (dy / tavolsag) * ventEro;
+            // Ha a kurzor közel van a NEM-hez - ERŐS taszítás
+            if (tavolsagNem < nemTiltosSugár) {
+                const ero = (nemTiltosSugár - tavolsagNem) / nemTiltosSugár;
+                kursorX += (dxNem / tavolsagNem) * ventEro * ero * 3;
+                kursorY += (dyNem / tavolsagNem) * ventEro * ero * 3;
+            }
+
+            // Folyamatos vonzás az IGEN felé
+            const dxIgen = igenKozepX - kursorX;
+            const dyIgen = igenKozepY - kursorY;
+            const tavolsagIgen = Math.hypot(dxIgen, dyIgen);
+
+            if (tavolsagIgen > 5) {
+                kursorX += (dxIgen / tavolsagIgen) * ventVonzas;
+                kursorY += (dyIgen / tavolsagIgen) * ventVonzas;
             }
         }
 
-        requestAnimationFrame(kursorFrissit);
+        requestAnimationFrame(kursorLoop);
     }
 
-    kursorFrissit();
+    kursorLoop();
 
-    // ===== ASZTALI EGÉR MOZGÁS =====
+    // ===== ASZTALI EGÉR =====
     if (!isTelefon) {
         document.addEventListener('mousemove', function(e) {
-            if (!ventAktiv) {
-                kursorX = e.clientX;
-                kursorY = e.clientY;
-            }
+            kursorX = e.clientX;
+            kursorY = e.clientY;
         });
 
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function() {
             clickEsemeny();
         });
     }
@@ -369,16 +403,18 @@
         clickEsemeny();
     }, { passive: false });
 
-    // ===== CLICK ESEMÉNY LOGIKA =====
+    // ===== CLICK LOGIKA =====
     function clickEsemeny() {
         const igenRect = igenGomb.getBoundingClientRect();
         const nemRect = nemGomb.getBoundingClientRect();
 
-        const igenHover = kursorX >= igenRect.left && kursorX <= igenRect.right &&
-                          kursorY >= igenRect.top && kursorY <= igenRect.bottom;
+        const igenHover =
+            kursorX >= igenRect.left && kursorX <= igenRect.right &&
+            kursorY >= igenRect.top && kursorY <= igenRect.bottom;
 
-        const nemHover = kursorX >= nemRect.left && kursorX <= nemRect.right &&
-                         kursorY >= nemRect.top && kursorY <= nemRect.bottom;
+        const nemHover =
+            kursorX >= nemRect.left && kursorX <= nemRect.right &&
+            kursorY >= nemRect.top && kursorY <= nemRect.bottom;
 
         if (igenHover) {
             if (utolsoKerdes) {
@@ -399,10 +435,9 @@
         utolsoKerdes = aktualisKerdes === kerdesek.length - 1;
 
         if (utolsoKerdes) {
-            // Ventillátor bekapcsol
-            ventilator.style.display = 'block';
+            // Ventillátor megjelenik
+            ventilator.style.display = 'flex';
             ventAktiv = true;
-            // NEM gomb elhalványul
             nemGomb.style.opacity = '0.4';
         } else {
             ventilator.style.display = 'none';
@@ -417,6 +452,7 @@
         ventilator.style.display = 'none';
         touchpadContainer.style.display = 'none';
         clickBtnContainer.style.display = 'none';
+        virtualisKurzor.style.display = 'none';
         document.getElementById('siker').style.display = 'block';
         konfettiEso();
     }
@@ -431,6 +467,8 @@
                 k.style.left = Math.random() * 100 + 'vw';
                 k.style.background = szinek[Math.floor(Math.random() * szinek.length)];
                 k.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                k.style.width = (Math.random() * 8 + 6) + 'px';
+                k.style.height = (Math.random() * 8 + 6) + 'px';
                 document.body.appendChild(k);
                 setTimeout(() => k.remove(), 3500);
             }, i * 40);
