@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Fontos kérdés</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #ffe0f0;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 20px;
+            margin: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: none;
+        }
+
+        #igen {
+            background: #ff69b4;
+            color: white;
+        }
+
+        #nem {
+            background: #ccc;
+            color: black;
+        }
+
+        #ventilator {
+            font-size: 80px;
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: forog 0.3s linear infinite;
+        }
+
+        @keyframes forog {
+            from { transform: translateY(-50%) rotate(0deg); }
+            to { transform: translateY(-50%) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<h1>Szeretnél velem jönni randira? 🌹</h1>
+
+<div>
+    <button class="btn" id="igen" onclick="igen()">Igen 💖</button>
+    <button class="btn" id="nem" id="nem">Nem</button>
+</div>
+
+<div id="ventilator">🌀</div>
+
+<script>
+    const nemGomb = document.getElementById('nem');
+
+    // Ventillátor elfújja a kurzort
+    document.addEventListener('mousemove', function(e) {
+        const ventiX = window.innerWidth - 60; // ventillátor pozíciója
+        const ventiY = window.innerHeight / 2;
+
+        const nemRect = nemGomb.getBoundingClientRect();
+        const nemX = nemRect.left + nemRect.width / 2;
+        const nemY = nemRect.top + nemRect.height / 2;
+
+        // Ha a kurzor közel van a NEM gombhoz
+        const tavolsag = Math.hypot(e.clientX - nemX, e.clientY - nemY);
+
+        if (tavolsag < 150) {
+            // Elfújjuk a gombot a ventillátor felé ELLENTÉTES irányba
+            const dx = nemX - ventiX;
+            const dy = nemY - ventiY;
+            const hossz = Math.hypot(dx, dy);
+
+            const eroссеg = (150 - tavolsag) * 1.5;
+
+            const ujX = nemRect.left + (dx / hossz) * eroссеg;
+            const ujY = nemRect.top + (dy / hossz) * eroссеg;
+
+            nemGomb.style.position = 'fixed';
+            nemGomb.style.left = ujX + 'px';
+            nemGomb.style.top = ujY + 'px';
+        }
+    });
+
+    function igen() {
+        document.body.innerHTML = `
+            <div style="text-align:center; font-size:30px;">
+                <p>Tudtam, hogy okos vagy! 😍🎉</p>
+                <p>❤️🌹❤️</p>
+            </div>
+        `;
+    }
+</script>
+
+</body>
+</html>
