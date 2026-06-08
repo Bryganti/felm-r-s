@@ -2,103 +2,318 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <title>Fontos kérdés</title>
+    <title>Fontos kérdés 💕</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            background: #ffe0f0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ffe0f0, #f0e0ff);
+            overflow: hidden;
+        }
+
+        .kerdes-box {
+            text-align: center;
+            padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #c2185b;
+            margin-bottom: 30px;
+        }
+
+        .gombok {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .btn {
-            padding: 15px 30px;
-            font-size: 20px;
-            margin: 10px;
-            border-radius: 10px;
+            padding: 15px 35px;
+            font-size: 22px;
+            border-radius: 50px;
             cursor: pointer;
             border: none;
+            transition: transform 0.2s;
         }
 
         #igen {
             background: #ff69b4;
             color: white;
+            box-shadow: 0 4px 15px rgba(255,105,180,0.4);
+        }
+
+        #igen:hover {
+            transform: scale(1.1);
+        }
+
+        /* NEM gomb szárnyakkal */
+        #nem-container {
+            position: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: none;
+            z-index: 100;
+        }
+
+        .szarny {
+            font-size: 28px;
+            animation: szarnycsap 0.3s ease-in-out infinite alternate;
+            display: inline-block;
+        }
+
+        .szarny-bal {
+            animation-delay: 0s;
+            transform-origin: right center;
+        }
+
+        .szarny-jobb {
+            animation-delay: 0.15s;
+            transform-origin: left center;
+        }
+
+        @keyframes szarnycsap {
+            from { transform: scaleY(1); }
+            to { transform: scaleY(0.4); }
         }
 
         #nem {
             background: #ccc;
             color: black;
+            padding: 15px 35px;
+            font-size: 22px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            margin: 0 5px;
         }
 
-        #ventilator {
-            font-size: 80px;
+        /* Repülés animáció */
+        .repul {
+            animation: elrepul 1.5s ease-in forwards !important;
+        }
+
+        @keyframes elrepul {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            30% { transform: translate(200px, -150px) rotate(20deg); opacity: 1; }
+            60% { transform: translate(500px, -400px) rotate(45deg); opacity: 0.5; }
+            100% { transform: translate(1000px, -800px) rotate(90deg); opacity: 0; }
+        }
+
+        /* Siker képernyő */
+        #siker {
+            display: none;
+            text-align: center;
+            animation: fadeIn 1s ease;
+        }
+
+        #siker h1 {
+            font-size: 36px;
+            color: #c2185b;
+        }
+
+        /* Konfetti */
+        .konfetti {
             position: fixed;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            animation: forog 0.3s linear infinite;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: esik 3s ease-in forwards;
+            z-index: 999;
         }
 
-        @keyframes forog {
-            from { transform: translateY(-50%) rotate(0deg); }
-            to { transform: translateY(-50%) rotate(360deg); }
+        @keyframes esik {
+            0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Telefonos segítség szöveg */
+        #segitseg {
+            position: fixed;
+            bottom: 20px;
+            font-size: 13px;
+            color: #999;
+            text-align: center;
+            padding: 0 20px;
         }
     </style>
 </head>
 <body>
 
-<h1>Szeretnél velem jönni randira? 🌹</h1>
-
-<div>
-    <button class="btn" id="igen" onclick="igen()">Igen 💖</button>
-    <button class="btn" id="nem" id="nem">Nem</button>
+<!-- Kérdés oldal -->
+<div class="kerdes-box" id="kerdes-oldal">
+    <h1 id="kerdes-szoveg">Betöltés...</h1>
+    <div class="gombok">
+        <button class="btn" id="igen" onclick="kovetkezoKerdes(true)">Igen 💖</button>
+    </div>
 </div>
 
-<div id="ventilator">🌀</div>
+<!-- NEM gomb külön, fixált pozícióban -->
+<div id="nem-container">
+    <span class="szarny szarny-bal">🪶</span>
+    <button class="btn" id="nem" onclick="kovetkezoKerdes(false)">Nem</button>
+    <span class="szarny szarny-jobb">🪶</span>
+</div>
+
+<!-- Siker képernyő -->
+<div id="siker">
+    <h1>Tudtam hogy okos vagy! 🎉</h1>
+    <p style="font-size:24px; margin-top:20px;">❤️🌹❤️</p>
+    <p style="font-size:18px; color:#c2185b; margin-top:15px;">Ez lesz a legjobb randi! 😍</p>
+</div>
+
+<!-- Segítség szöveg telefonon -->
+<div id="segitseg">📱 Húzd az ujjad a gomb felé...</div>
 
 <script>
-    const nemGomb = document.getElementById('nem');
+    const kerdesek = [
+        "Klassz vagy? 😎",
+        "Szeretsz kalandokat? 🌟",
+        "Hiszel a sorsban? ✨",
+        "Eljössz velem randira? 🌹"
+    ];
 
-    // Ventillátor elfújja a kurzort
+    let aktualisKerdes = 0;
+    let utolsoKerdes = false;
+    let nemContainer = document.getElementById('nem-container');
+    let repulFolyamatban = false;
+
+    // NEM gomb kezdőpozíció beállítása
+    function nemGombPozicio() {
+        const igengomb = document.getElementById('igen');
+        const rect = igengomb.getBoundingClientRect();
+        nemContainer.style.left = (rect.right + 20) + 'px';
+        nemContainer.style.top = rect.top + 'px';
+    }
+
+    // Kérdés megjelenítése
+    function kerdesMutat() {
+        document.getElementById('kerdes-szoveg').textContent = kerdesek[aktualisKerdes];
+        utolsoKerdes = aktualisKerdes === kerdesek.length - 1;
+
+        // NEM gomb láthatóság
+        nemContainer.style.display = 'flex';
+        nemContainer.classList.remove('repul');
+        repulFolyamatban = false;
+
+        setTimeout(nemGombPozicio, 100);
+    }
+
+    // Következő kérdés logika
+    function kovetkezoKerdes(igenValasz) {
+        if (utolsoKerdes && igenValasz) {
+            sikerKepernyo();
+            return;
+        }
+
+        if (!utolsoKerdes) {
+            aktualisKerdes++;
+            kerdesMutat();
+        }
+    }
+
+    // Siker képernyő
+    function sikerKepernyo() {
+        document.getElementById('kerdes-oldal').style.display = 'none';
+        nemContainer.style.display = 'none';
+        document.getElementById('segitseg').style.display = 'none';
+        document.getElementById('siker').style.display = 'block';
+        konfettiEso();
+    }
+
+    // Elrepülés függvény
+    function elrepul() {
+        if (repulFolyamatban) return;
+        repulFolyamatban = true;
+
+        // Random irány
+        const iranyX = (Math.random() - 0.3) * 800;
+        const iranyY = -(Math.random() * 600 + 200);
+
+        nemContainer.style.transition = 'transform 1.2s ease-in, opacity 1.2s ease-in';
+        nemContainer.style.transform = `translate(${iranyX}px, ${iranyY}px) rotate(${Math.random() * 60 - 30}deg)`;
+        nemContainer.style.opacity = '0';
+
+        setTimeout(() => {
+            // Visszahelyezzük
+            nemContainer.style.transition = 'none';
+            nemContainer.style.transform = 'none';
+            nemContainer.style.opacity = '1';
+            repulFolyamatban = false;
+            nemGombPozicio();
+        }, 1800);
+    }
+
+    // 🖥️ ASZTALI - egér közelség figyelés
     document.addEventListener('mousemove', function(e) {
-        const ventiX = window.innerWidth - 60; // ventillátor pozíciója
-        const ventiY = window.innerHeight / 2;
+        if (!utolsoKerdes || repulFolyamatban) return;
 
-        const nemRect = nemGomb.getBoundingClientRect();
-        const nemX = nemRect.left + nemRect.width / 2;
-        const nemY = nemRect.top + nemRect.height / 2;
+        const rect = nemContainer.getBoundingClientRect();
+        const kozepX = rect.left + rect.width / 2;
+        const kozepY = rect.top + rect.height / 2;
+        const tavolsag = Math.hypot(e.clientX - kozepX, e.clientY - kozepY);
 
-        // Ha a kurzor közel van a NEM gombhoz
-        const tavolsag = Math.hypot(e.clientX - nemX, e.clientY - nemY);
-
-        if (tavolsag < 150) {
-            // Elfújjuk a gombot a ventillátor felé ELLENTÉTES irányba
-            const dx = nemX - ventiX;
-            const dy = nemY - ventiY;
-            const hossz = Math.hypot(dx, dy);
-
-            const eroссеg = (150 - tavolsag) * 1.5;
-
-            const ujX = nemRect.left + (dx / hossz) * eroссеg;
-            const ujY = nemRect.top + (dy / hossz) * eroссеg;
-
-            nemGomb.style.position = 'fixed';
-            nemGomb.style.left = ujX + 'px';
-            nemGomb.style.top = ujY + 'px';
+        if (tavolsag < 120) {
+            elrepul();
         }
     });
 
-    function igen() {
-        document.body.innerHTML = `
-            <div style="text-align:center; font-size:30px;">
-                <p>Tudtam, hogy okos vagy! 😍🎉</p>
-                <p>❤️🌹❤️</p>
-            </div>
-        `;
+    // 📱 TELEFONOS - ujj húzás figyelés
+    document.addEventListener('touchmove', function(e) {
+        if (!utolsoKerdes || repulFolyamatban) return;
+
+        const touch = e.touches[0];
+        const rect = nemContainer.getBoundingClientRect();
+        const kozepX = rect.left + rect.width / 2;
+        const kozepY = rect.top + rect.height / 2;
+        const tavolsag = Math.hypot(touch.clientX - kozepX, touch.clientY - kozepY);
+
+        if (tavolsag < 130) {
+            elrepul();
+        }
+    }, { passive: true });
+
+    // Konfetti
+    function konfettiEso() {
+        const szinek = ['#ff69b4', '#ff1493', '#c71585', '#ffb6c1', '#ff6347', '#ffd700'];
+        for (let i = 0; i < 80; i++) {
+            setTimeout(() => {
+                const k = document.createElement('div');
+                k.classList.add('konfetti');
+                k.style.left = Math.random() * 100 + 'vw';
+                k.style.background = szinek[Math.floor(Math.random() * szinek.length)];
+                k.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                k.style.width = (Math.random() * 8 + 6) + 'px';
+                k.style.height = (Math.random() * 8 + 6) + 'px';
+                document.body.appendChild(k);
+                setTimeout(() => k.remove(), 3500);
+            }, i * 40);
+        }
     }
+
+    // Ablak átméretezésnél újrapozicionál
+    window.addEventListener('resize', nemGombPozicio);
+
+    // Indítás
+    kerdesMutat();
 </script>
 
 </body>
